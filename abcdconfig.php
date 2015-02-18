@@ -1,4 +1,4 @@
 <?php
 
-echo "Abcd Config ";
+echo "Abcd Config Demo";
 ?>
