@@ -1,3 +1,4 @@
+Note : Install required library (tcpdf or dom via composer)
 //Component
 <?php
 namespace App\Controller\Component;
@@ -104,6 +105,7 @@ error_reporting(0);
 $writer = 'PDF';
 //$rendererName = PHPExcel_Settings::PDF_RENDERER_DOMPDF;
 $rendererName = PHPExcel_Settings::PDF_RENDERER_TCPDF;
+//specify folder path where library files resides
 //$rendererLibrary = 'dompdf/dompdf';
 $rendererLibrary =  'tecnick.com/tcpdf';
 $rendererLibraryPath = dirname(__FILE__) . '/../../../vendor/' . $rendererLibrary;
