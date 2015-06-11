@@ -1,0 +1,1621 @@
+//Component
+<?php
+namespace App\Controller\Component;
+
+use Cake\Controller\Component;
+use Cake\Controller\ComponentRegistry;
+
+use PHPExcel;
+use PHPExcel_IOFactory;
+use PHPExcel_Cell;
+use PHPExcel_Cell_DataType;
+use PHPExcel_Settings;
+use PHPExcel_Worksheet_PageSetup;
+
+use PHPExcel_Style_Alignment;
+use PHPExcel_Style_Border;
+use PHPExcel_Style_Fill;
+use PHPExcel_Style_Protection;
+class ExcelExportComponent extends Component
+{
+    /**
+     * Instance of PHPExcel class
+     *
+     * @var PHPExcel
+     */
+    protected $objPHPExcel;
+ 
+    /**
+     * Pointer to current row
+     *
+     * @var int
+     */
+    protected $_row = 1;
+ 
+    /**
+     * Internal table params
+     *
+     * @var array
+     */
+    protected $_tableParams;
+
+    public function createWorksheet() 
+    {
+        $this->objPHPExcel = new PHPExcel();
+
+        /** Protecting sheet from editing **/
+       // $this->objPHPExcel->getActiveSheet()->getProtection()->setSheet(true);   
+      // Needs to be set to true in order to enable any worksheet protection!
+      /*
+      $this->objPHPExcel->getActiveSheet()->getProtection()->setSheet(true);   
+      $this->objPHPExcel->getActiveSheet()->getProtection()->setPassword('Vikas');
+      
+      // UnProtecting Row 
+      $this->objPHPExcel->getActiveSheet()->getStyle('A2:E2')->getProtection()->setLocked(PHPExcel_Style_Protection::PROTECTION_UNPROTECTED); 
+     */
+        $this->_row = 1;
+ 
+        return $this;
+    }
+
+    public function loadWorksheet($file)
+    {
+        
+        $this->objPHPExcel = PHPExcel_IOFactory::load($file);
+        $this->_row = 1;
+ 
+        return $this;
+    }
+
+    public function output($filename = 'export.xlsx', $writer = 'Excel2007')
+    {
+        // remove all output
+        ob_end_clean();
+        // headers
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header("Content-Disposition: attachment;filename=\"$filename\"");
+        header('Cache-Control: max-age=0');
+
+        // If you're serving to IE 9, then the following may be needed
+        header('Cache-Control: max-age=1');
+
+        // If you're serving to IE over SSL, then the following may be needed
+        header ('Expires: Mon, 26 Jul 1997 05:00:00 GMT'); // Date in the past
+        header ('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT'); // always modified
+        header ('Cache-Control: cache, must-revalidate'); // HTTP/1.1
+        header ('Pragma: public'); // HTTP/1.0
+ 
+        // writer
+        $objWriter = $this->getWriter($writer);
+        $objWriter->save('php://output');
+ 
+        exit;
+    }
+
+
+    public function outputpdf($filename = 'output.pdf', $writer = 'PDF')
+    {
+        // remove all output
+        ob_end_clean();
+
+/** Start **/
+error_reporting(0);
+ //ini_set('display_errors', 1);
+$writer = 'PDF';
+//$rendererName = PHPExcel_Settings::PDF_RENDERER_DOMPDF;
+$rendererName = PHPExcel_Settings::PDF_RENDERER_TCPDF;
+//$rendererLibrary = 'dompdf/dompdf';
+$rendererLibrary =  'tecnick.com/tcpdf';
+$rendererLibraryPath = dirname(__FILE__) . '/../../../vendor/' . $rendererLibrary;
+//$this->objPHPExcel->getActiveSheet()->getColumnDimension('C')->setWidth(5);
+//PORTRAIT
+//LANDSCAPE
+$this->objPHPExcel->getActiveSheet(0)->getPageSetup()->setOrientation(PHPExcel_Worksheet_PageSetup::ORIENTATION_PORTRAIT);
+$this->objPHPExcel->getActiveSheet(0)->getPageSetup()->setPaperSize(PHPExcel_Worksheet_PageSetup::PAPERSIZE_A4);
+$this->objPHPExcel->getActiveSheet(0)->getPageSetup()->setFitToWidth(1);
+$this->objPHPExcel->getActiveSheet(0)->getPageSetup()->setFitToHeight(0);
+$this->objPHPExcel->getActiveSheet(0)->setShowGridLines(false);
+
+$this->objPHPExcel->getActiveSheet()->getStyle('A1:E1')->applyFromArray(
+        array(
+            'font'    => array(
+                'bold'      => true
+            ),
+            'alignment' => array(
+                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT,
+            ),
+            'borders' => array(
+                'top'     => array(
+                    'style' => PHPExcel_Style_Border::BORDER_THICK
+                )
+            ),
+            'fill' => array(
+                'type'       => PHPExcel_Style_Fill::FILL_GRADIENT_LINEAR,
+                'rotation'   => 90,
+                'startcolor' => array(
+                    'argb' => 'FFA0A0A0'
+                ),
+                'endcolor'   => array(
+                    'argb' => 'FFFFFFFF'
+                )
+            )
+        )
+);
+
+
+
+if (!PHPExcel_Settings::setPdfRenderer(
+                $rendererName,
+                $rendererLibraryPath
+            )) {
+            die(
+                'NOTICE: Please set the $rendererName and $rendererLibraryPath values' .
+                EOL .
+                'at the top of this script as appropriate for your directory structure'
+            );
+        }
+
+
+
+        /* $callEndTime = microtime(true);
+        $callTime = $callEndTime - $callStartTime;
+        echo date('H:i:s') , " File written to " , str_replace('.php', '_'.$rendererName.'.pdf', pathinfo(__FILE__, PATHINFO_BASENAME)) , EOL;
+        echo 'Call time to write Workbook was ' , sprintf('%.4f',$callTime) , " seconds" , EOL;
+        // Echo memory usage
+        echo date('H:i:s') , ' Current memory usage: ' , (memory_get_usage(true) / 1024 / 1024) , " MB" , EOL;
+
+
+        // Echo memory peak usage
+        echo date('H:i:s') , " Peak memory usage: " , (memory_get_peak_usage(true) / 1024 / 1024) , " MB" , EOL;
+
+        // Echo done
+        echo date('H:i:s') , " Done writing files" , EOL;
+        echo 'File has been created in ' , getcwd() , EOL; */
+
+/** End **/
+
+        // headers
+
+        header('Content-Type: application/pdf');
+        header("Content-Disposition: attachment;filename=\"$filename\"");
+        header('Cache-Control: max-age=0');
+
+        // If you're serving to IE 9, then the following may be needed
+        header('Cache-Control: max-age=1');
+
+        // If you're serving to IE over SSL, then the following may be needed
+        header ('Expires: Mon, 26 Jul 1997 05:00:00 GMT'); // Date in the past
+        header ('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT'); // always modified
+        header ('Cache-Control: cache, must-revalidate'); // HTTP/1.1
+        header ('Pragma: public'); // HTTP/1.0
+ 
+        // writer
+        $objWriter = $this->getWriter($writer);
+        $objWriter->setSheetIndex(0);
+        // file saved in current wrking directory
+        //$objWriter->save($filename);
+        
+        $objWriter->save('php://output');
+
+        exit;
+    }
+
+    public function getWriter($writer)
+    {
+        return PHPExcel_IOFactory::createWriter($this->objPHPExcel, $writer);
+    }
+   
+    public function save($file, $writer = 'Excel2007') 
+    {
+        $objWriter = $this->getWriter($writer);
+        return $objWriter->save($file);
+    }
+
+    public function addData($data, $offset = 0) 
+    {
+        // solve textual representation
+        if (!is_numeric($offset))
+            $offset = PHPExcel_Cell::columnIndexFromString($offset);
+ 
+        foreach ($data as $d)
+            $this->objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($offset++, $this->_row, $d);
+ 
+        $this->_row++;
+ 
+        return $this;
+    }
+
+    public function addTableFooter() 
+    {
+        // auto width
+        foreach ($this->_tableParams['auto_width'] as $col)
+            $this->objPHPExcel->getActiveSheet()->getColumnDimensionByColumn($col)->setAutoSize(true);
+ 
+        // filter (has to be set for whole range)
+        if (count($this->_tableParams['filter']))
+            $this->objPHPExcel->getActiveSheet()->setAutoFilter(PHPExcel_Cell::stringFromColumnIndex($this->_tableParams['filter'][0]) . ($this->_tableParams['header_row']) . ':' . PHPExcel_Cell::stringFromColumnIndex($this->_tableParams['filter'][count($this->_tableParams['filter']) - 1]) . ($this->_tableParams['header_row'] + $this->_tableParams['row_count']));
+ 
+        // wrap
+        foreach ($this->_tableParams['wrap'] as $col)
+            $this->objPHPExcel->getActiveSheet()->getStyle(PHPExcel_Cell::stringFromColumnIndex($col) . ($this->_tableParams['header_row'] + 1) . ':' . PHPExcel_Cell::stringFromColumnIndex($col) . ($this->_tableParams['header_row'] + $this->_tableParams['row_count']))->getAlignment()->setWrapText(true);
+ 
+        return $this;
+    }
+
+    public function addTableRow($data)
+    {
+        $offset = $this->_tableParams['offset'];
+ 
+        foreach ($data as $d)
+        {
+           // $this->objPHPExcel->getActiveSheet()->getColumnDimensionByColumn($offset)->setWidth((float)5);
+            
+            $this->objPHPExcel->getActiveSheet()->setCellValueExplicitByColumnAndRow($offset++, $this->_row, $d);
+       
+
+        }
+   
+   // $this->objPHPExcel->getActiveSheet()->getStyle('A2')->getProtection()->setLocked(PHPExcel_Style_Protection::PROTECTION_PROTECTED);
+
+    //$this->objPHPExcel->getActiveSheet()->setCellValueExplicitByColumnAndRow($offset++, $this->_row, $d,PHPExcel_Cell_DataType::TYPE_STRING);
+   
+        $this->_row++;
+        $this->_tableParams['row_count']++;
+ 
+        return $this;
+    }
+
+    public function addTableHeader($data, $params = array())
+    {
+        // offset
+        $offset = 0;
+        if (isset($params['offset']))
+            $offset = is_numeric($params['offset']) ? (int)$params['offset'] : PHPExcel_Cell::columnIndexFromString($params['offset']);
+ 
+        // font name
+        if (isset($params['font']))
+            $this->objPHPExcel->getActiveSheet()->getStyle($this->_row)->getFont()->setName($params['font']);
+ 
+        // font size
+        if (isset($params['size']))
+            $this->objPHPExcel->getActiveSheet()->getStyle($this->_row)->getFont()->setSize($params['size']);
+ 
+        // bold
+        if (isset($params['bold']))
+            $this->objPHPExcel->getActiveSheet()->getStyle($this->_row)->getFont()->setBold($params['bold']);
+ 
+        // italic
+        if (isset($params['italic']))
+            $this->objPHPExcel->getActiveSheet()->getStyle($this->_row)->getFont()->setItalic($params['italic']);
+ 
+        // set internal params that need to be processed after data are inserted
+        $this->_tableParams = array(
+            'header_row' => $this->_row,
+            'offset' => $offset,
+            'row_count' => 0,
+            'auto_width' => array(),
+            'filter' => array(),
+            'wrap' => array()
+        );
+ 
+        foreach ($data as $d) {
+            // set label
+            $this->objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($offset, $this->_row, $d['label']);
+ 
+            // set width
+            if (isset($d['width']) && is_numeric($d['width']))
+                $this->objPHPExcel->getActiveSheet()->getColumnDimensionByColumn($offset)->setWidth((float)$d['width']);
+            else
+                $this->_tableParams['auto_width'][] = $offset;
+ 
+            // filter
+            if (isset($d['filter']) && $d['filter'])
+                $this->_tableParams['filter'][] = $offset;
+ 
+            // wrap
+            if (isset($d['wrap']) && $d['wrap'])
+                $this->_tableParams['wrap'][] = $offset;
+ 
+            $offset++;
+        }
+        $this->_row++;
+ 
+        return $this;
+    } 
+
+    public function setRow($row) {
+        $this->_row = (int)$row;
+        return $this;
+    }
+
+    public function setDefaultFont($name, $size) {
+        $this->objPHPExcel->getDefaultStyle()->getFont()->setName($name);
+        $this->objPHPExcel->getDefaultStyle()->getFont()->setSize($size);
+ 
+        return $this;
+    }
+
+    public function setWorksheetName($name) {
+        $this->objPHPExcel->getActiveSheet()->setTitle($name);
+ 
+        return $this;
+    }
+
+    public function __call($name, $arguments) {
+        return call_user_func_array(array($this->objPHPExcel, $name), $arguments);
+    }
+ 
+   public function getRowData($row)
+   {
+        $rowdata = [];
+        $highestColumnIndex = $this->getColumnsCount();
+
+        for ($col = 0; $col < $highestColumnIndex; ++ $col) 
+        {
+            $cell = $this->objPHPExcel->getActiveSheet()->getCellByColumnAndRow($col, $row);
+            $val = $cell->getValue();
+
+            $rowdata[] = $val;
+        }
+
+        return $rowdata;
+   }
+
+   public function getRowsCount()
+   {
+        $highestRow = $this->objPHPExcel->getActiveSheet()->getHighestRow(); // e.g. 10  
+
+        return $highestRow;  
+   }
+
+   public function getColumnsCount()
+   {
+       $highestDataColumm = $this->objPHPExcel->getActiveSheet()->getHighestDataColumn(); // e.g. 10  
+
+       $highestColumnIndex = PHPExcel_Cell::columnIndexFromString($highestDataColumm);
+        
+       return $highestColumnIndex;      
+   }
+
+   public function readSheet($file,$entity)
+   {
+        $entity->product_name = 'PQR';
+        // $entity->set('product_name','Abcd');
+        // $entity->set('product_name','Abcd');
+        // $entity->set('product_name','Abcd');
+        // $entity->set('product_name','Abcd');
+
+        pr($entity);
+        $objPHPExcel = PHPExcel_IOFactory::load($file);
+
+        foreach ($objPHPExcel->getWorksheetIterator() as $worksheet) 
+        {
+            $worksheetTitle     = $worksheet->getTitle();
+            
+            // total rows
+            $highestRow         = $worksheet->getHighestRow(); // e.g. 10
+            
+            // total columns
+            $highestColumn      = $worksheet->getHighestColumn(); // e.g 'AMK'
+            
+            $highestDataColumm = $worksheet->getHighestDataColumn(); // e.g 'F'
+
+            $highestColumnIndex = PHPExcel_Cell::columnIndexFromString($highestDataColumm);
+            // echo PHPExcel_Cell::columnIndexFromString('A');
+            // echo "<br />";
+            // echo PHPExcel_Cell::columnIndexFromString('B');
+            // echo "<br />";
+            // echo PHPExcel_Cell::columnIndexFromString('C');
+            // echo "<br />";
+            $nrColumns = ord($highestDataColumm) - 64;
+            echo "<br>The worksheet ".$worksheetTitle." has ";
+            echo $nrColumns . ' columns (A-' . $highestColumn . ') ';
+            echo ' and ' . $highestRow . ' row.<BR><BR>';
+
+
+            echo '<br>Data: <table border="1"><tr>';
+            for ($row = 1; $row <= $highestRow; ++ $row) {
+                echo '<tr>';
+                for ($col = 0; $col < $highestColumnIndex; ++ $col) {
+
+                    $cell = $worksheet->getCellByColumnAndRow($col, $row);
+                    $val = $cell->getValue();
+                   // $dataType = PHPExcel_Cell_DataType::dataTypeForValue($val);
+                    echo '<td>' . $val . '</td>';
+                }
+                echo '</tr>';
+            }
+            echo '</table>';
+
+           die();
+        }
+   }
+ 
+    public function createExcelDoc()
+    {
+
+        error_reporting(E_ALL);
+ini_set('display_errors', TRUE);
+ini_set('display_startup_errors', TRUE);
+date_default_timezone_set('Europe/London');
+
+if (PHP_SAPI == 'cli')
+    die('This example should only be run from a Web Browser');
+
+        $objPHPExcel = new PHPExcel();
+
+
+// Set document properties
+$objPHPExcel->getProperties()->setCreator("Maarten Balliauw")
+                             ->setLastModifiedBy("Maarten Balliauw")
+                             ->setTitle("Office 2007 XLSX Test Document")
+                             ->setSubject("Office 2007 XLSX Test Document")
+                             ->setDescription("Test document for Office 2007 XLSX, generated using PHP classes.")
+                             ->setKeywords("office 2007 openxml php")
+                             ->setCategory("Test result file");
+
+
+// Add some data
+$objPHPExcel->setActiveSheetIndex(0)
+            ->setCellValue('A1', 'Hello')
+            ->setCellValue('B2', 'world!')
+            ->setCellValue('C1', 'Hello')
+            ->setCellValue('D2', 'world!');
+
+// Miscellaneous glyphs, UTF-8
+$objPHPExcel->setActiveSheetIndex(0)
+            ->setCellValue('A4', 'Miscellaneous glyphs')
+            ->setCellValue('A5', 'éàèùâêîôûëïüÿäöüç');
+
+// Rename worksheet
+$objPHPExcel->getActiveSheet()->setTitle('Simple');
+
+
+// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+$objPHPExcel->setActiveSheetIndex(0);
+
+ob_end_clean();
+// Redirect output to a client’s web browser (Excel2007)
+header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+header('Content-Disposition: attachment;filename="01simple.xlsx"');
+header('Cache-Control: max-age=0');
+// If you're serving to IE 9, then the following may be needed
+header('Cache-Control: max-age=1');
+
+// If you're serving to IE over SSL, then the following may be needed
+header ('Expires: Mon, 26 Jul 1997 05:00:00 GMT'); // Date in the past
+header ('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT'); // always modified
+header ('Cache-Control: cache, must-revalidate'); // HTTP/1.1
+header ('Pragma: public'); // HTTP/1.0
+
+$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+
+//pr($objWriter);
+//die();
+$objWriter->save('php://output');
+exit;
+
+    }
+}
+
+
+
+
+//Controller
+
+<?php
+namespace App\Controller;
+
+use App\Controller\AppController;
+use Cake\ORM\TableRegistry;
+use Cake\Core\Configure;
+use Cake\Validation\Validator;
+use Cake\Cache\Cache;
+
+/**
+ * Products Controller
+ *
+ * @property \App\Model\Table\ProductsTable $Products
+ */
+class ProductsController extends AppController
+{
+
+    /**
+     * Index method
+     *
+     * @return void
+     */
+
+    public $helpers = ['Common','ImageResize'];
+
+    public function initialize()
+    {
+         parent::initialize();
+         $this->loadComponent('Paypal');  
+         $this->loadComponent('ExcelExport');  
+
+         // Using a short name
+        Cache::config('short', [
+            'className' => 'File',
+            'duration' => '+1 minutes',
+            'path' => CACHE,
+            'prefix' => 'cake_short_'
+        ]);
+
+        
+    }
+
+    public function mysearch()
+    {
+        $this->loadComponent('Search.Prg');
+
+        $query = $this->Products
+                ->find('search', $this->request->query)
+                ->contain([
+                'ProductImages','ProductsCategories'
+                ]);
+
+//pr($query->toArray())
+        $baseurl = Configure::read('base_url');
+        $this->set('baseurl',$baseurl); 
+        $pcat = $this->Products->ProductsCategories->find();
+        //pr($pcat->toArray());
+        $this->set('pcategories', $pcat->toArray());
+        
+        $this->set('products', $this->paginate($query));
+        $this->set('_serialize', ['products']);
+
+         /* ->order(['Country.id' => 'asc'])
+         ->contain([
+                'Cities'
+            ]); */
+        $this->render('index');
+        
+    }
+
+    public function index()
+    {
+        $this->paginate = [
+                'contain' => ['ProductImages','ProductsCategories'],
+                'limit'   => 9,
+                ]; 
+
+        $baseurl = Configure::read('base_url');
+        $this->set('baseurl',$baseurl); 
+        $pcat = $this->Products->ProductsCategories->find();
+        //pr($pcat->toArray());
+        $this->set('pcategories', $pcat->toArray());       
+        $this->set('products', $this->paginate($this->Products));
+        $this->set('_serialize', ['products']);
+
+        
+    }
+
+    public function loadMore()
+    {
+        $page = $this->request->data['page'];
+        //$page = 3;
+        /*
+        // one way 
+        $queryObj = $this->Products->customPaginate($page,3);
+        //debug($queryObj);
+        pr($queryObj->fetchAll('assoc'));
+        echo json_encode($queryObj->fetchAll('assoc'));*/
+
+        //one way two
+        //$offset = ($page - 1) * $limit = $row_start
+         //$page = ;
+        //$limit = ;
+        $queryObj = $this->Products->customPaginate($page,3);
+        //debug($queryObj);
+      //  pr(json_encode($queryObj->toArray()));
+       echo json_encode($queryObj->toArray());
+        exit();
+    }
+
+    public function search()
+    {
+        
+        $cat_id = $this->request->query['cat_id'];
+
+        $product_price = $this->request->query['product_price'];
+        
+        //$cat_id = 2;
+        $queryObj = $this->Products->customSearch($cat_id,$product_price);
+        //debug($queryObj);
+        //pr($queryObj->toArray());
+        echo json_encode($queryObj->toArray());
+        exit();
+    }
+
+    public function searchbypricerange()
+    {
+        $pricerange = $this->request->data['pricerange'];
+        $values = str_replace(' ','',$pricerange);
+        $values = explode('-',$values);
+        $min = $values[0];
+        $max = $values[1];
+
+        $queryObj = $this->Products->searchByPriceRange($min,$max);
+        echo json_encode($queryObj->toArray());
+        exit();
+    }
+
+    public function addtocart()
+    {
+        
+        $session = $this->request->session();
+
+        $cart = $session->read('cart');
+        $price = $this->request->data['price'];
+        $pid = $this->request->data['pid'];
+        $pname = $this->request->data['pname'];
+
+        $cart['items'][$pid] = [
+                'pname' => $pname,
+                'qty' => (!empty($cart['items'][$pid]['qty']))?$cart['items'][$pid]['qty']+1 : 1,
+                'price' => $price
+        ] ;
+        $session->write('cart', $cart);
+        echo count($session->read('cart.items'));
+        exit;
+        //pr($session->read('cart'));
+        //$session->delete('cart');
+        //exit;
+    }
+
+    public function getcartitems()
+    {
+        $session = $this->request->session();
+        echo json_encode($session->read('cart.items'));
+        exit;
+    }
+
+    public function checkout()
+    {
+        $session = $this->request->session();
+        $cartitems = $session->read('cart.items');
+
+        $baseurl = Configure::read('base_url');
+        $this->set('baseurl',$baseurl);
+        $this->set('items', $cartitems);
+    }
+
+
+
+    public function updatecart()
+    {
+        $session = $this->request->session();
+        $cart = $session->read('cart');
+        $pid = $this->request->data['pid'];
+        $qty = $this->request->data['qty'];
+
+        $cart['items'][$pid]['qty'] = $qty;
+        $session->write('cart', $cart); 
+        exit;
+    }
+
+    public function removeItem()
+    {
+      $session = $this->request->session();
+      $cart = $session->read('cart');
+      $pid = $this->request->data['pid'];
+      $session->delete("cart.items.$pid");
+      exit;  
+    }
+
+    public function buyproducts()
+    {
+        $requestParams = array(
+        'IPADDRESS' => $_SERVER['REMOTE_ADDR'],          // Get our IP Address
+        'PAYMENTACTION' => 'Sale'
+    );
+        $creditCardDetails = array(
+            'CREDITCARDTYPE' => 'Visa',
+            'ACCT' => '4032034217357402',
+            'EXPDATE' => '82019',          // Make sure this is without slashes (NOT in the format 07/2017 or 07-2017)
+            'CVV2' => '984'
+        );
+        $payerDetails = array(
+            'FIRSTNAME' => 'John',
+            'LASTNAME' => 'Doe2',
+            'COUNTRYCODE' => 'US',
+            'STATE' => 'NY',
+            'CITY' => 'New York',
+            'STREET' => '14 Argyle Rd.',
+            'ZIP' => '10010'
+        );
+        $orderParams = array(
+            'AMT' => '5',               // This should be equal to ITEMAMT + SHIPPINGAMT
+            'ITEMAMT' => '4',
+            'SHIPPINGAMT' => '1',
+            'CURRENCYCODE' => 'USD'       // USD for US Dollars
+        );
+        $item = array(
+            'L_NAME0' => 'iPhone',
+            'L_DESC0' => 'White iPhone, 16GB',
+            'L_AMT0' => '4',
+            'L_QTY0' => '1'
+        );
+
+       $responsedata = $this->Paypal->request('DoDirectPayment',
+       $requestParams + $creditCardDetails + $payerDetails + $orderParams + $item
+);
+        if( is_array($responsedata) && $responsedata['ACK'] == 'Success') { // Payment successful
+            // We'll fetch the transaction ID for internal bookkeeping
+            $transactionId = $responsedata['TRANSACTIONID'];
+        }else
+        {
+               Echo "There was an error processing Request!";
+        }
+        $this->set('responsedata',$responsedata);
+       
+  }
+
+    /**
+     * View method
+     *
+     * @param string|null $id Product id.
+     * @return void
+     * @throws \Cake\Network\Exception\NotFoundException When record not found.
+     */
+    public function view($id = null)
+    {
+        $product = $this->Products->get($id, [
+            'contain' => ['ProductImages','ProductsCategories']
+        ]);
+        $baseurl = Configure::read('base_url');
+        $this->set('baseurl',$baseurl);
+        $this->set('product', $product);
+        $this->set('_serialize', ['product']);
+    }
+
+    /**
+     * Add method
+     *
+     * @return void Redirects on successful add, renders view otherwise.
+     */
+    public function add()
+    {
+        $product = $this->Products->newEntity();
+       // debug($product->toArray());
+       // die();
+        if ($this->request->is('post')) {
+
+            // pr($this->request->data);
+            // die();
+            $product = $this->Products->patchEntity($product, $this->request->data);
+            
+            //pr($product);
+           // die();
+            if ($this->Products->save($product)) {
+
+                $this->Flash->success('The product has been saved.');
+                return $this->redirect(['action' => 'index']);
+            } else {
+                $errors = $product->errors();
+                //print_r($errors);
+                $this->Flash->error('The product could not be saved. Please, try again.');
+            }
+        }
+        $baseurl = Configure::read('base_url');
+        $this->set('baseurl',$baseurl);
+        $this->set('productsCategories', $this->Products->ProductsCategories->find());
+        $this->set(compact('product'));
+        $this->set('_serialize', ['product']);
+    }
+
+    /**
+     * Edit method
+     *
+     * @param string|null $id Product id.
+     * @return void Redirects on successful edit, renders view otherwise.
+     * @throws \Cake\Network\Exception\NotFoundException When record not found.
+     */
+    public function edit($id = null)
+    {
+        $product = $this->Products->get($id, [
+            'contain' => []
+        ]);
+        if ($this->request->is(['patch', 'post', 'put'])) {
+            $product = $this->Products->patchEntity($product, $this->request->data);
+            if ($this->Products->save($product)) {
+                $this->Flash->success('The product has been saved.');
+                return $this->redirect(['action' => 'index']);
+            } else {
+                $this->Flash->error('The product could not be saved. Please, try again.');
+            }
+        }
+        $this->set('productsCategories', $this->Products->ProductsCategories->find('list'));
+        
+        $this->set(compact('product'));
+        $this->set('_serialize', ['product']);
+    }
+
+    /**
+     * Delete method
+     *
+     * @param string|null $id Product id.
+     * @return void Redirects to index.
+     * @throws \Cake\Network\Exception\NotFoundException When record not found.
+     */
+    public function delete($id = null)
+    {
+        $this->request->allowMethod(['post', 'delete']);
+        $product = $this->Products->get($id);
+        if ($this->Products->delete($product)) {
+            $this->Flash->success('The product has been deleted.');
+        } else {
+            $this->Flash->error('The product could not be deleted. Please, try again.');
+        }
+        return $this->redirect(['action' => 'index']);
+    }
+
+    public function export() {
+        $this->response->download("export.csv");
+        $data = $this->Products->find('all');
+        $this->set(compact('data'));
+        $this->layout = 'ajax';
+        exit;
+    }
+
+
+    public function demo()
+    {
+       $this->ExcelExport->createExcelDoc();
+
+        exit;
+    }
+
+    public function excelExport()
+    {
+        $output_format = $this->request->query['output_format'];
+
+        $this->ExcelExport->createWorksheet();
+        $table = [
+                        array('label' => __('Sr.No'), 'width' => 10),
+                        array('label' => __('Product Name'), 'width' => 30, 'filter' => true),
+                        array('label' => __('Product Description'), 'width' => 60, 'filter' => true,'wrap' => true),
+                        array('label' => __('Category'), 'width' => 30, 'filter' => true),
+                        array('label' => __('Product Price'), 'width' => 30, 'wrap' => true,'filter' => true)
+                    ];
+
+        $products = $this->Products->find('all',['contain' => ['ProductsCategories']]);
+
+        $this->ExcelExport->setWorksheetName('Products');
+        $this->ExcelExport->addTableHeader($table, array('name' => 'Cambria', 'bold' => true));
+    
+        $srno = 1;
+        foreach ($products as $product)
+        {
+            
+            $row = [
+                        $srno,
+                        $product->product_name,
+                        $product->product_description,
+                        $product->products_category->category_name,
+                        $product->product_price
+                    ];
+            
+            $this->ExcelExport->addTableRow($row);
+
+            $srno++;
+        }
+
+
+        $this->ExcelExport->addTableFooter();
+
+        if($output_format == 'excel'){
+           $this->ExcelExport->output('Product_export.xlsx'); 
+        }else{
+            $this->ExcelExport->outputpdf('Product_export.pdf');
+        }
+        exit;
+    }
+
+    public function excelimport()
+    {
+        $errors = [];
+        $product = $this->Products->newEntity(); // appllies entity validation
+        if ($this->request->is('post')) 
+        {
+            
+            $validator = $this->Products->validationImport(new Validator());
+
+            // validate request data
+            $errors = $validator->errors($this->request->data());
+            
+            if (empty($errors))
+            {
+
+                    // file upload
+                    $filename = (isset($_FILES['filename']['name']))? $_FILES['filename']['name']: '';
+
+                    if(!empty($filename))
+                    {
+                        $tmpname = $_FILES['filename']['tmp_name'];
+                        
+                        //Moving Uploaded File
+                        if(move_uploaded_file($tmpname, $_SERVER['DOCUMENT_ROOT'] . '/vikas/bookmarksapp/webroot/uploads/import/'.$filename))
+                        {       
+                           
+                           //$entity['filename'] = $filename; 
+
+                            $this->ExcelExport->loadWorksheet($_SERVER['DOCUMENT_ROOT'] . '/vikas/bookmarksapp/webroot/uploads/import/'.$filename);
+                            
+                            $noofrec = $this->ExcelExport->getRowsCount();
+
+
+                            $query = $this->Products->find('all');     
+                            $number = $query->count();
+
+                            $insert_id = ($number > 0)? ($number+1) : 1;
+
+                            $insertedRecCount = 0;
+
+                            for($row = 1; $row <= $noofrec; ++ $row) 
+                            {
+                                if($row == 1)
+                                    continue;
+
+                                $product = $this->Products->newEntity(); 
+
+                                $rowData = $this->ExcelExport->getRowData($row);
+                                
+                                $file_name = ($rowData[5] != '')? $rowData[5] : 'default-product.jpg';
+
+                                $file_arr = pathinfo($file_name);
+
+                                $image_name = "default-product.jpg";
+
+                                if($file_name != 'default-product.jpg')
+                                 $image_name = $insert_id."_1.".$file_arr['extension'];
+                               
+                                   
+
+                                $insert_id++;
+                                
+                                $productarr = [
+                                    'product_name' => $rowData[1],
+                                    'product_description' => $rowData[2],
+                                    'category_id' => 1,
+                                    'product_price' => $rowData[4],
+                                    'product_images' => [
+                                        '0' => [
+                                            'image_name' => $image_name
+                                        ]
+                                    ]
+                                    ];
+
+
+                                 $product = $this->Products->patchEntity($product, $productarr);
+                                     // pr($rowData);
+                                     // pr($product);
+                                     // die();
+
+
+                                /*$product = $this->Products->newEntity([
+                                    'product_name' => $rowData[1],
+                                    'product_description' => $rowData[2],
+                                    'category_id' => 1,
+                                    'product_price' => $rowData[4]
+                                    ]); */
+
+                                $this->Products->removeBehavior('FilesUploads');
+                                $this->Products->save($product);
+
+                                if(isset($image_name) && $image_name !='default-product.jpg')
+                                {
+                                    fopen(WWW_ROOT.'/uploads/'.$image_name,'w+');
+                                    $newfile = WWW_ROOT.'/uploads/'.$image_name;
+                                    $file_to_import = WWW_ROOT.'/testing/'.$rowData[5];
+                                    $current = file_get_contents($file_to_import);
+
+                                    file_put_contents($newfile,$current);
+
+                                }
+
+                                $insertedRecCount++;
+
+                            }
+
+                          /*  echo $this->ExcelExport->getColumnsCount();
+
+                            pr($this->ExcelExport->getRowData(2));
+                            die();
+
+                             $this->ExcelExport->readSheet($_SERVER['DOCUMENT_ROOT'] . '/vikas/bookmarksapp/webroot/uploads/import/'.$filename,$product);
+                            $product = $this->Products->patchEntity($product, $this->request->data);
+            
+            
+                            if ($this->Products->save($product))
+                            {
+
+                                $this->Flash->success('The product has been saved.');
+                                return $this->redirect(['action' => 'index']);
+                           }   
+                            */
+
+                           unlink($_SERVER['DOCUMENT_ROOT'] . '/vikas/bookmarksapp/webroot/uploads/import/'.$filename);   
+
+                            $this->Flash->success($insertedRecCount.' Products Imported Successfully');
+                            return $this->redirect(['action' => 'excelimport']);
+                        
+                        }else{ 
+
+                            $this->Flash->success('Can not be upload');
+                            return $this->redirect(['action' => 'excelimport']);
+                        
+                                
+                        }
+
+                    }
+
+
+            }
+
+            //pr($errors);
+        }
+
+        $this->set(compact('product','errors'));
+    }
+
+
+    public function cacheDemo()
+    {
+       // Cache::delete('products');
+
+         $product_arr = [];
+         if (($products = Cache::read('products')) === false) 
+         {
+            echo "Retriving Products From Database";
+            $products = $this->Products->find('all');
+
+           
+            Cache::write('products', json_encode($products));
+            
+         }else
+         {
+            echo "Retriving Products From Cache";
+         }
+
+        pr(json_decode($products));
+       
+        exit;
+
+    }
+
+    public function getProductData()
+    {
+        
+    }
+  
+}   
+
+// View
+
+
+<div class="products index large-10 medium-9 columns">
+    <div id="search-cont">
+        <form action="<?php echo $baseurl ?>products/mysearch">
+            <input type="text" placeholder="Type Product Name..." id="search" name="product_name" >
+            
+        </form>
+
+       
+    </div>
+<div>
+    <div id="export">
+        <?= $this->Html->link('Export To Excel',['controller' => 'Products','action' => 'excelExport','?' =>['output_format' => 'excel']],['class' => 'export']); ?>
+        <?= $this->Html->link('Export To PDF',['controller' => 'Products','action' => 'excelExport','?' =>['output_format' => 'pdf']],['class' => 'export']); ?>
+    </div>
+
+    <div id="import">
+        <?= $this->Html->link('Import Excel',['controller' => 'Products','action' => 'excelimport'],['class' => 'import']); ?>
+    </div>
+</div>
+<div style="clear:both"></div>
+
+    
+    <div class="filter-by">
+        <table>
+            <thead>
+                <tr>
+                    <th colspan="4">Filter By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th>Category</th>
+                    <td><?php //pr($productsCategories); ?>
+                    <select name="category_id" id="category_id">
+                        <option value="">--select--</option>
+                        <option value="all">All</option>
+                        <?php
+                        foreach($pcategories as $eachcat){
+                            //print_r($eachcat);
+                        ?>
+                        <option value="<?php echo $eachcat->id ?>" ><?php echo $eachcat->category_name; ?></option>
+                        <?php
+                        }
+                        ?>
+                    </select>
+                    </td>
+                    <th>Price</th>
+                    <td>
+                        
+                        <select name="product_price" id="product_price">
+                            <option value="" >--select--</option>
+                            <option value="<_1000">< 1000</option>
+                            <option value="1000-40000">1000 - 40000</option>
+                            <option value=">_40000"> > 40000</option>
+                        </select>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td colspan="4" style="text-align:center">
+                        <input type="button" class="button" name="searchbtn" id="searchbtn" value="Search" />
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4">
+                    
+                        <label for="amount" style="display:inline-block">Price Range:</label>
+                        <div type="text" id="amount" name="amount" style="border:0; color:#f6931f; font-weight:bold;background-color:#F5F5F5;font-weight: bold;width: 50%;display:inline-block;margin-bottom: 12px;"></div>
+                    
+    
+                        <div id="slider-range" style="width:100%;"></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+<?php
+
+$cartitemcount = count($this->request->session()->read('cart.items'));
+?>
+<div class="cart-container">
+    <span><i class="shopping-cart"></i></span>
+    <div class="clear"></div>
+    <span class="item-count"><?= $cartitemcount; ?></span>
+</div>
+<div class="cart-template" style="position:absolute;display:none">
+    <span id="close">X</span>
+    <ul id="cart-content" class="cart-content">
+    </ul>
+    <?= $this->Html->link('Checkout',['controller' => 'Products','action'=>'checkout'],['class' => 'checkout-btn']);
+    ?>
+</div>
+    <div>
+        <div id="filters" class="button-group">
+        <button class="button is-checked" data-filter="*">All</button>
+<?php
+                        foreach($pcategories as $eachcat):
+                            //print_r($eachcat);
+                        ?>
+            <button class="button" data-filter=".cat_<?php echo $eachcat->id; ?>" ><?php echo $eachcat->category_name; ?></button>
+<?php endforeach; ?>
+        </div>
+    </div>
+   <?php /* ?> <table cellpadding="0" cellspacing="0">
+    <thead>
+        <tr>
+            <th><?= $this->Paginator->sort('id') ?></th>
+            <th><?= $this->Paginator->sort('product_name') ?></th>
+            <th><?= $this->Paginator->sort('category_id') ?></th>
+            <th><?= $this->Paginator->sort('product_price') ?></th>
+            <th><?= $this->Paginator->sort('created') ?></th>
+            <th><?= $this->Paginator->sort('modified') ?></th>
+            <th class="actions"><?= __('Actions') ?></th>
+        </tr>
+    </thead>
+    <tbody>
+    <?php foreach ($products as $product): ?>
+        <tr>
+            <td><?= $this->Number->format($product->id) ?></td>
+            <td><?= h($product->product_name) ?></td>
+            <td>
+                <?= $product->has('products_category') ? $this->Html->link($product->products_category->id, ['controller' => 'ProductsCategories', 'action' => 'view', $product->products_category->id]) : '' ?>
+            </td>
+            <td><?= $this->Number->format($product->product_price) ?></td>
+            <td><?= h($product->created) ?></td>
+            <td><?= h($product->modified) ?></td>
+            <td class="actions">
+                <?= $this->Html->link(__('View'), ['action' => 'view', $product->id]) ?>
+                <?= $this->Html->link(__('Edit'), ['action' => 'edit', $product->id]) ?>
+                <?= $this->Form->postLink(__('Delete'), ['action' => 'delete', $product->id], ['confirm' => __('Are you sure you want to delete # {0}?', $product->id)]) ?>
+            </td>
+        </tr>
+
+    <?php endforeach; ?>
+    </tbody>
+    </table> <?php */ ?>
+    <?php /* ?>
+    <div class="paginator">
+        <ul class="pagination">
+            <?= $this->Paginator->prev('< ' . __('previous')) ?>
+            <?= $this->Paginator->numbers() ?>
+            <?= $this->Paginator->next(__('next') . ' >') ?>
+        </ul>
+        <p><?= $this->Paginator->counter() ?></p>
+    </div>
+    <?php */ ?>
+<!-- Product Container -->
+
+<div class="row">
+    <div id="product-container" class="isotope1">
+    <?php foreach ($products as $product): ?>
+
+        <div  class="col-sm-4 each-item element-item cat_<?php echo $product->category_id; ?>">
+            
+        <?php
+        $imgname = "";
+        if(!empty($product->product_images))
+        $imgname = $product->product_images[0]->image_name;
+        
+
+            echo $this->Html->image('../uploads/'.$imgname, ['alt' => $imgname,'width' => '100px','height'=>'100px','fullBase' => true,
+                'url' => ['controller' => 'Products', 'action' => 'view', $product->id]
+                ]);
+                    ?>
+
+        <h2><?= $product->product_name; ?></h2>
+
+            <p>Price: <em>Rs.<?= $product->product_price; ?></em>
+            </p>
+            <button data-pid="<?php echo $product->id;  ?>" data-price="<?php echo $product->product_price;  ?>" data-pname="<?php echo $product->product_name;  ?>" class="add-to-cart" type="button">Add to cart</button>
+                    
+           
+        </div>
+    <?php endforeach; ?>
+    </div>
+
+</div>
+
+<?php
+//echo $this->Common->productData(2)->product_name;
+?>
+
+<!-- Product Container End -->
+
+<script id="cart-template" type="text/template">
+        <li> {{product_name}}
+            <ul>
+                <li><span> Qty</span>{{qty}}</li>
+                <li><span> Price </span>Rs. {{price}}</li>
+                <li><span> Total  </span>Rs. {{total}}</li>
+            </ul>
+        </li>
+</script>
+
+
+
+</div>
+<!--
+
+document height = scroll top + window height
+
+-->
+
+<script type="text/javascript">
+page = 4;
+    $(document).ready(function(){
+
+        $(document).on('scroll',function(){
+            window_height = $(window).height();
+            scroll_top = $(this).scrollTop();
+            doc_height = $(this).height();
+
+            //console.log('Top: '+scroll_top);
+            //console.log('Window: '+window_height);
+            //console.log('Document: '+doc_height);
+
+            if((doc_height-window_height) == scroll_top)
+            {
+                //alert('load more........................');
+                baseurl = '<?php echo $baseurl; ?>';
+                $.ajax({
+                    method: "POST",
+                    url: baseurl+'products/loadMore/'+page,
+                    data: {'page': page},
+                    success:function(responsemsg){
+
+                      var  template  = $('#product-container-template').html();
+
+                      var  html = '';
+$.each(responsemsg,function(key,obj){
+    imgname = '';
+if((obj.product_images).length)
+    imgname = obj.product_images[0].image_name;
+html += template.replace(/{{product_id}}/ig,obj.id)
+                .replace(/{{product_name}}/ig,obj.product_name)
+                .replace(/{{product_price}}/ig,obj.product_price)
+                .replace(/{{image_name}}/ig,imgname)
+                .replace(/{{cat_id}}/ig,obj.category_id); ;
+
+
+                    //console.log();
+                        
+                       // console.log(obj.id);
+                    });
+                    $('#product-container').append(html);
+                    
+                    },
+                    dataType: 'json'
+                });
+
+                page++;
+            }
+        });
+
+        $('#searchbtn').on('click',function(event){
+                cat_id = $('#category_id').val();
+                product_price = $('#product_price').val();
+                baseurl = '<?php echo $baseurl; ?>';
+                querystring = '?cat_id='+cat_id+'&product_price='+product_price;
+
+                $.ajax({
+                    method: "POST",
+                    url: baseurl+'products/search/'+querystring,
+                    data: {'cat_id': cat_id},
+                    success:function(responsemsg){
+                       var  template  = $('#product-container-template').html();
+
+                      var  html = '';
+$.each(responsemsg,function(key,obj){
+ imgname = '';
+if((obj.product_images).length)
+    imgname = obj.product_images[0].image_name;
+html += template.replace(/{{product_id}}/ig,obj.id)
+                .replace(/{{product_name}}/ig,obj.product_name)
+                .replace(/{{product_price}}/ig,obj.product_price)
+                .replace(/{{image_name}}/ig,imgname)
+                .replace(/{{cat_id}}/ig,obj.category_id); 
+            });
+$('#product-container').html(html);
+                    
+                    },
+                    dataType: 'json'
+                });
+        });
+
+
+        $('.cart-container').on('click',function(event){
+            baseurl = '<?php echo $baseurl; ?>';
+            $.ajax({
+                    method: "POST",
+                    url: baseurl+'products/getcartitems/',
+                    success:function(responsemsg){
+                       var  template  = $('#cart-template').html();
+
+                      var  html = '';
+$.each(responsemsg,function(key,obj){
+   // console.log(obj);
+    console.log(key);
+
+html += template.replace(/{{product_name}}/ig,obj.pname)
+                .replace(/{{price}}/ig,obj.price)
+                .replace(/{{qty}}/ig,obj.qty)
+                .replace(/{{total}}/ig,obj.qty * obj.price); 
+
+            });
+                $('#cart-content').html(html);
+
+               /* $( ".cart-template" ).animate({
+                 'display': 'block',
+                 'top': cart.offset().top - 36,
+                 'left': cart.offset().left - 643,
+                 'z-index': 999, 
+                
+                }, 1000 ,"easeInOutExpo" ) */
+                cart = $('.shopping-cart');
+                //console.log(cart.offset().top);
+                $( ".cart-template" ).css({
+                 'top': cart.offset().top - 36,
+                 'left': cart.offset().left - 643,
+                 'z-index': 999, 
+                
+                }).slideToggle('slow');
+                    
+                    },
+                    dataType: 'json'
+                });
+
+        });
+
+        $('#close').on('click',function(event){
+            $('.cart-template').css('display','none');
+        });
+
+    });
+</script>
+
+
+<script id="product-container-template" type="text/template">
+    <div  class="col-sm-4 each-item element-item cat_{{cat_id}}">
+        <a href="/vikas/bookmarksapp/products/view/{{product_id}}"><img width="100px" height="100px" alt="{{image_name}}" src="http://localhost/vikas/bookmarksapp/img/../uploads/{{image_name}}"></a>
+        <h2>
+            {{product_name}}     
+        </h2>
+        <p>Price: <em>
+        Rs. {{product_price}}  
+        </em>     
+        </p>    
+        <button data-pid="{{product_id}}" data-price="{{product_price}}" data-pname="{{product_name}}" class="add-to-cart" type="button">Add to cart</button>
+    </div>
+
+</script>
+
+
+<?= $this->Html->script('isotope.pkgd.js',['block' => 'isotope']) ?>
+
+<script type="text/javascript">
+    // external js: isotope.pkgd.js
+
+$( document ).ready( function() {
+  // init Isotope
+  var $container = $('.isotope').isotope({
+    itemSelector: '.element-item',
+    layoutMode: 'fitRows',
+    getSortData: {
+      name: '.name',
+      symbol: '.symbol',
+      number: '.number parseInt',
+      category: '[data-category]',
+      weight: function( itemElem ) {
+        var weight = $( itemElem ).find('.weight').text();
+        return parseFloat( weight.replace( /[\(\)]/g, '') );
+      }
+    }
+  });
+
+  // filter functions
+  var filterFns = {
+    // show if number is greater than 50
+    numberGreaterThan50: function() {
+      var number = $(this).find('.number').text();
+      return parseInt( number, 10 ) > 50;
+    },
+    // show if name ends with -ium
+    ium: function() {
+      var name = $(this).find('.name').text();
+      return name.match( /ium$/ );
+    }
+  };
+
+  // bind filter button click
+  $('#filters').on( 'click', 'button', function() {
+    var filterValue = $( this ).attr('data-filter');
+    // use filterFn if matches value
+    filterValue = filterFns[ filterValue ] || filterValue;
+    $container.isotope({ filter: filterValue });
+  });
+
+  // bind sort button click
+  $('#sorts').on( 'click', 'button', function() {
+    var sortByValue = $(this).attr('data-sort-by');
+    $container.isotope({ sortBy: sortByValue });
+  });
+  
+  // change is-checked class on buttons
+  $('.button-group').each( function( i, buttonGroup ) {
+    var $buttonGroup = $( buttonGroup );
+    $buttonGroup.on( 'click', 'button', function() {
+      $buttonGroup.find('.is-checked').removeClass('is-checked');
+      $( this ).addClass('is-checked');
+    });
+  });
+  
+});
+</script>
+
+
+<script type="text/javascript">
+    $('#product-container').on('click','.add-to-cart', function () {
+        pid = $(this).data('pid');
+        price = $(this).data('price');
+        pname = $(this).data('pname');
+        baseurl = '<?php echo $baseurl; ?>';
+        var cart = $('.shopping-cart');
+        var imgtodrag = $(this).parent('.each-item').find("img").eq(0);
+        if (imgtodrag) {
+            var imgclone = imgtodrag.clone()
+                .offset({
+                top: imgtodrag.offset().top,
+                left: imgtodrag.offset().left
+            })
+                .css({
+                    'opacity': '0.5',
+                    'position': 'absolute',
+                    'height': '150px',
+                    'width': '150px',
+                    'z-index': '100'
+            })
+                .appendTo($('body'))
+                .animate({
+                    'top': cart.offset().top + 10,
+                    'left': cart.offset().left + 10,
+                    'width': 75,
+                    'height': 75
+            }, 1000, 'easeInOutExpo');
+            
+            setTimeout(function () {
+                cart.effect("shake", {
+                    times: 2
+                }, 200);
+            }, 1500);
+
+            imgclone.animate({
+                'width': 0,
+                    'height': 0
+            }, function () {
+                $(this).detach()
+            });
+        }
+
+
+        $.ajax({
+            method: "POST",
+            url: baseurl+'products/addtocart/',
+            data: {'pid': pid,'price':price,'pname':pname},
+            success:function(responsemsg){
+                $('.item-count').html(responsemsg);
+            },
+        });
+
+
+        
+
+    });
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function() {
+
+    $( "#slider-range" ).slider({
+      range: true,
+      min: 100,
+      max: 100000,
+      values: [ 100, 100000 ],
+      orientation: "horizontal",
+      animate: "fast",
+      slide: function( event, ui ) {
+        $( "#amount" ).html(ui.values[ 0 ] + "-" + ui.values[ 1 ] );
+
+        pricerange = $( "#amount" ).html();
+        baseurl = '<?php echo $baseurl; ?>';
+        $.ajax({
+                    method: "POST",
+                    url: baseurl+'products/searchbypricerange/',
+                    data: {'pricerange': pricerange},
+                    success:function(responsemsg){
+                       var  template  = $('#product-container-template').html();
+
+                      var  html = '';
+                        $.each(responsemsg,function(key,obj){
+ imgname = '';
+if((obj.product_images).length)
+    imgname = obj.product_images[0].image_name;
+                        html += template.replace(/{{product_id}}/ig,obj.id)
+                                        .replace(/{{product_name}}/ig,obj.product_name)
+                                        .replace(/{{product_price}}/ig,obj.product_price)
+                                        .replace(/{{image_name}}/ig,imgname)
+                                        .replace(/{{cat_id}}/ig,obj.category_id); 
+                                    });
+                    $('#product-container').html(html);
+                    
+                    },
+                    dataType: 'json'
+                });
+
+
+      }
+    });
+
+    $( "#amount" ).html($( "#slider-range" ).slider( "values", 0 ) +
+      "-" + $( "#slider-range" ).slider( "values", 1 ) );
+  });
+// values: [ 100, 1000 ], used to show current range on slider
+</script>
